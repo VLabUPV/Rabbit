@@ -1,3 +1,22 @@
+## ---------------------------
+##
+## Script name: runRabbit
+##
+## Purpose of script ..
+##
+## Author: Marina Martinez Alvaro and Cristina Casto Rebollo
+##
+## Date Created: 2023-02-12
+##
+## Email: mamaral9@upv.es; ccasto3@gmail.com
+##
+## ---------------------------
+##
+## Notes:
+##   
+##
+## ---------------------------
+
 if ((!"pacman" %in% installed.packages())==TRUE){install.packages("pacman")}
 pacman::p_load(brms,emmeans,tidybayes,tidyr,magrittr,HDInterval,crayon,ggplot2,gridExtra,gtable,grid,ggpubr,cowplot)
 

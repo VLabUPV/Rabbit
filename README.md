@@ -4,4 +4,4 @@ A user-friendly Bayesian software to analyse mixed models
 
 ## Introduction
 
-This is ...
+This is ... test

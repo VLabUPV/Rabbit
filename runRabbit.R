@@ -16,7 +16,7 @@
 ##   
 ##
 ## ---------------------------
-library(ggplot2)
+
 if ((!"pacman" %in% installed.packages())==TRUE){install.packages("pacman")}
 pacman::p_load(brms,emmeans,tidybayes,tidyr,magrittr,HDInterval,crayon,ggplot2,gridExtra,gtable,grid,ggpubr,cowplot)
 
@@ -745,15 +745,15 @@ cat("\n")
     pdf(paste(pdf.name,".pdf",sep=""), height=8, width=8)
     table.total <- NULL
     
-    for (m in 1:ncol(FE)){
-      for (j in (m+1):ncol(FE)) {
-        if(j>ncol(FE)) break
-        table <- ggtexttable(table(FE[,m],FE[,j]),theme=ttheme("light"))
-        table <- table %>%
-          tab_add_title(text = paste(colnames(FE)[m],colnames(FE)[j], sep=" vs "), face = "bold",size = 12, padding = unit(2, "line"))
-        grid.draw(table)
-      }
-    }
+    # for (m in 1:ncol(FE)){
+    #   for (j in (m+1):ncol(FE)) {
+    #     if(j>ncol(FE)) break
+    #     table <- ggtexttable(table(FE[,m],FE[,j]),theme=ttheme("light"))
+    #     table <- table %>%
+    #       tab_add_title(text = paste(colnames(FE)[m],colnames(FE)[j], sep=" vs "), face = "bold",size = 12, padding = unit(2, "line"))
+    #     grid.draw(table)
+    #   }
+    # }
     
     Contrasts.total <- data.frame(Contrasts.total)
     for (trait in 1:length(hTrait)) {

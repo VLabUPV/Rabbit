@@ -4,11 +4,11 @@
 ##
 ## Purpose of script ..
 ##
-## Author: Marina Martinez Alvaro and Cristina Casto Rebollo
+## Authors: Marina Martinez Alvaro and Cristina Casto Rebollo
 ##
 ## Date Created: 2023-02-12
 ##
-## Email: mamaral9@upv.es; ccasto3@gmail.com
+## Email: mamaral9@upv.es; ciscasre@posgrado.upv.es
 ##
 ## ---------------------------
 ##
@@ -255,10 +255,10 @@ pacman::p_load(brms,emmeans,tidybayes,tidyr,magrittr,HDInterval,crayon,ggplot2,g
       lag    <- as.numeric(readline(sprintf("%s\n",green("Enter the lag between samples   "))))
     } else { #Default parameters
       Seed = 1234  
-      chain = 1
-      iter = 1500
-      burnin = 100
-      lag = 1
+      chain = 2
+      iter = 30000
+      burnin = 5000
+      lag = 10
     }
 
   
@@ -301,7 +301,6 @@ pacman::p_load(brms,emmeans,tidybayes,tidyr,magrittr,HDInterval,crayon,ggplot2,g
     #       rInterval[2,n]<-0}
     #     }  
     # }
-  
   
   
   
@@ -485,7 +484,7 @@ for (u in 1:nTrait){
     if ((nTreatment==0)&&(nCov!=0)){ #If there is no treatment but covariate do it this way
             MeanModel<-NULL #FALTA!! PORBAR CO 2 COVARIATES
             for (i in 1:nrow(Covariate)){
-              MeanModel[i]= mean(data[,pTrait[u]]- Covariate[i,1]*data[,pCov[u]] + modelfit$b_Intercept[i], na.rm=TRUE)}
+              MeanModel[i]= mean(data[,pTrait[u]]- Covariate[i,1]*data[,pCov[1]] + modelfit$b_Intercept[i], na.rm=TRUE)}
             } 
     
     MeanModel.total<-data.frame(c(MeanModel.total,MeanModel))
@@ -640,8 +639,8 @@ for (u in 1:nTrait){
           Inf_PC[i,5]=P/ChainLength
           
           # Probability of relevance 
-          Inf_PC[i,6]=rValue[u]
           if(askProbRel=="Y"|askProbRel=="y"){ 
+            Inf_PC[i,6]=rValue[u]
             if (askCompare=="D" | askCompare=="d"){
               if (Inf_PC[i,1] > 0) {Pr=length(which(Contrasts[,i] > rValue[u]))} else {Pr=length(which(Contrasts[,i] < -rValue[u]))}
             }else{

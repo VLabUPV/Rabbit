@@ -2,7 +2,7 @@
 ##
 ## Script name: runRabbit
 ##
-## Purpose of script ..
+## Purpose of script: User-friendly software to fit mixed linear models using Bayesian Inference
 ##
 ## Authors: Marina Martinez Alvaro and Cristina Casto Rebollo
 ##
@@ -51,9 +51,9 @@ pacman::p_load(brms,emmeans,tidybayes,tidyr,magrittr,HDInterval,crayon,ggplot2,g
   }
   
   if(sub(".*\\.", "", file.name) =="csv"){
-    if (Missing=="Y"){data <- read.csv(file.name,header=T)} else {data <- read.csv(file.name,header=T, na.strings=MissingName)}}
+    if (Missing == "Y"| Missing == "y"){data <- read.csv(file.name,header=T)} else {data <- read.csv(file.name,header=T, na.strings=MissingName)}}
   if(sub(".*\\.", "", file.name) =="xlsx"){
-    if (Missing=="Y"){data <- data.frame(read_excel(file.name,col_names=T))} else {data <- data.frame(read_excel(file.name,col_names=T, na=MissingName))}}  
+    if (Missing == "Y"| Missing == "y"){data <- data.frame(read_excel(file.name,col_names=T))} else {data <- data.frame(read_excel(file.name,col_names=T, na=MissingName))}}  
 
   ri=nrow(data)
   cat(green(paste0("The number of rows in the data file is ", ri)))
@@ -65,14 +65,25 @@ pacman::p_load(brms,emmeans,tidybayes,tidyr,magrittr,HDInterval,crayon,ggplot2,g
   hTrait<-NULL
   pTrait<-NULL
   cat(green(paste0(c("Help: the header of the datafile is ", colnames(data)),collapse=" ")))
-  for(n in 1:nTrait){
-    hTrait[n]<- readline((sprintf("%s\n",green(paste("Enter the name of the Trait ", n," ")))))
-      while (!hTrait[n]%in%colnames(data)==TRUE) {
-        cat(green(paste0("Trait not found. Please check that spelling is correct")))
+  if (nTrait>1){
+    TraitsAsString<-readline((sprintf("%s\n",green(paste("Do you want to enter the name of all Traits at once (Enter Yes=Y or No=N) ? ")))))
+  }
+  
+  if (TraitsAsString == "Y"| TraitsAsString == "y"){
+    cat(green("Enter the positions of the Traits in the datafile"))
+    pTraitInString<- readline(sprintf("%s\n",green(paste("For example, enter c(1:3) for 1,2,3; c(1,4) for 1 and 4; or c(1:3,7) for 1,2,3 and 7 "))))
+    pTrait<-eval(parse(text = pTraitInString))
+    hTrait <- colnames(data)[pTrait]
+    cat(green(paste0(c("Traits read are", hTrait),collapse=" ")))
+  }else{
+    for(n in 1:nTrait){
         hTrait[n]<- readline((sprintf("%s\n",green(paste("Enter the name of the Trait ", n," ")))))
-      }
-    pTrait[n] <- which(colnames(data)== hTrait[n])
-   
+          while (!hTrait[n]%in%colnames(data)==TRUE) {
+            cat(green(paste0("Trait not found. Please check that spelling is correct")))
+            hTrait[n]<- readline((sprintf("%s\n",green(paste("Enter the name of the Trait ", n," ")))))
+          }
+        pTrait[n] <- which(colnames(data)== hTrait[n])
+     }
   }
 
   cat(green(paste0("Let's define the model. Remember, all traits will be analyzed with the same model!")))
@@ -361,6 +372,7 @@ pacman::p_load(brms,emmeans,tidybayes,tidyr,magrittr,HDInterval,crayon,ggplot2,g
   LSMeans.total  <-NULL
   Effects.total  <-NULL
   Contrasts.total<-NULL
+  LSMeansNoise.total  <-NULL
   Covariate.total<-NULL
   SD_Random.total<-NULL
   SD_E.total     <-NULL
@@ -409,6 +421,7 @@ for (u in 1:nTrait){
     LSMeans <- NULL
     Effects <- NULL
     Contrasts <-NULL
+    LSMeansNoise <- NULL
     Covariate<-NULL
     MeanModel<-NULL
     SD_E<-NULL
@@ -421,23 +434,23 @@ for (u in 1:nTrait){
     
     if (nTreatment!=0){
     for (i in 1:length(hTreatment)){
-      
-      #LSMeans
+  
+      #LSMeans of Treatments
           epred <- emmeans(model, hTreatment[i], epred = TRUE)
           iter_posterior <- gather_emmeans_draws(epred)
           iter_bylevels <- iter_posterior %>%
-            pivot_wider(names_from = hTreatment[i] , values_from = ".value",names_sep = "OP")
+            pivot_wider(names_from = hTreatment[i] , values_from = ".value")
           iter_bylevels<-data.frame(iter_bylevels[-c(1:3)])
           name.frame <- paste(hTreatment[i],c(1:nlevels_Treatment[i]),sep="")
           colnames(iter_bylevels)<-c(paste(name.frame,hTrait[u],sep="."))
           LSMeans<-data.frame(c(LSMeans, iter_bylevels))
           dim(LSMeans)
           
-      #Effects: Center LSMeans to get what Old Rabbit calls "Effects"
+      #Effects: Center LSMeans of Treatments to get what Old Rabbit calls "Effects"
           temp3<-iter_bylevels-rowMeans(iter_bylevels)
           Effects<-data.frame(c(Effects, temp3))
       
-      #Contrasts
+      #Contrasts of Treatments
           NContrasts=((nlevels_Treatment[i]*nlevels_Treatment[i]) - nlevels_Treatment[i])/2 
           k=0 #My counter
           temp1=matrix(0,nrow=NContrasts, ncol=3)
@@ -464,7 +477,22 @@ for (u in 1:nTrait){
           Contrasts.total <- cbind(Contrasts.total,Contrasts)
          
     } 
-          
+         
+    # LSMeans of Noise (compute it just in case)
+    if (nNoise!= 0) {
+     for (i in 1:length(hNoise)){
+          epred_Noise <- emmeans(model, hNoise[i], epred = TRUE)
+          iter_posterior_Noise <- gather_emmeans_draws(epred_Noise)
+          iter_bylevels_Noise <- iter_posterior_Noise %>%
+            pivot_wider(names_from = hNoise[i] , values_from = ".value")
+          iter_bylevels_Noise<-data.frame(iter_bylevels_Noise[-c(1:3)])
+          name.frame <- paste(hNoise[i],c(1:nlevels_Noise[i]),sep="")
+          colnames(iter_bylevels_Noise)<-c(paste(name.frame,hTrait[u],sep="."))
+          LSMeansNoise<-data.frame(c(LSMeansNoise, iter_bylevels_Noise))
+        }
+      LSMeansNoise.total<-cbind(LSMeansNoise.total,LSMeansNoise)
+    }
+    
     
     # Covariates
         if (nCov!= 0) {
@@ -479,21 +507,28 @@ for (u in 1:nTrait){
         }   
         
     # Mean of the model
-    head(modelfit)
-    if (nTreatment!=0){MeanModel=data.frame(rowMeans(LSMeans[1:nlevels_Treatment[1]]))} #If there is atreatment do it this way
-    if ((nTreatment==0)&&(nCov!=0)){ #If there is no treatment but covariate do it this way
-            MeanModel<-NULL #FALTA!! PORBAR CO 2 COVARIATES
-            for (i in 1:nrow(Covariate)){
-              MeanModel[i]= mean(data[,pTrait[u]]- Covariate[i,1]*data[,pCov[1]] + modelfit$b_Intercept[i], na.rm=TRUE)}
-            } 
-    
-    MeanModel.total<-data.frame(c(MeanModel.total,MeanModel))
-        
+    if (nTreatment!=0){MeanModel=data.frame(rowMeans(LSMeans[1:nlevels_Treatment[1]])) #If there is a treatment, compute the mean from LSMeans
+    } else if ((nTreatment==0)&&(nNoise!=0)){ #If there is no treatment but noise, compute the mean from LSMeansNoise
+    MeanModel=data.frame(rowMeans(LSMeansNoise[1:nlevels_Noise[1]]))
+    } else if ((nTreatment==0)&&(nNoise==0)&&(nCov!=0)) {
+    #If there is no treatment or noise but there are covariates do it this way
+      MeanModel<-NULL 
+      for (i in 1:nrow(Covariate)){
+          temp11=as.matrix(Covariate[i,])
+          MeanModel[i]= mean(data[,pTrait[u]]- (temp11 %*% t(data[,pCov])) + modelfit$b_Intercept[i], na.rm=TRUE)}
+        }
+    } else if ((nTreatment==0)&&(nNoise==0)&&(nCov==0)&&nRand!=0) {
+      MeanModel=data.frame(modelfit$b_Intercept) 
+    }  
+      MeanModel.total<-data.frame(c(MeanModel.total,MeanModel))
+       
+     
     # Residual Variance 
         pos2<-which(colnames(modelfit)=="sigma")
         SD_E<-modelfit[,pos2]
         SD_E.total<-data.frame(c(SD_E.total,SD_E))
-        
+    
+            
     # Random effect Variance
     if (nRand!= 0) {
       SD_Random<-NULL
@@ -639,6 +674,7 @@ for (u in 1:nTrait){
           Inf_PC[i,5]=P/ChainLength
           
           # Probability of relevance 
+          
           if(askProbRel=="Y"|askProbRel=="y"){ 
             Inf_PC[i,6]=rValue[u]
             if (askCompare=="D" | askCompare=="d"){
@@ -650,13 +686,15 @@ for (u in 1:nTrait){
           }
           
           # Probability of similarity
+          if(askProbRel=="Y"|askProbRel=="y"){ 
           if(askProbSimil=="Y" | askProbSimil=="y"){
             if (askCompare=="D" | askCompare=="d"){
                  Inf_PC[i,8]=sum(Contrasts[,i] < rValue[u] & Contrasts[,i] > -rValue[u])/ChainLength} 
                  }else{
                  Inf_PC[i,8]=sum(Contrasts[,i] > 1/rValue[u] & Contrasts[,i] < rValue[u])/ChainLength
                  }
-    
+          }
+          
          # Guaranteed value 
           temp6=sort(Contrasts[,i])
           Inf_PC[i,9]=probK
@@ -718,7 +756,10 @@ cat("\n")
     write.csv(Effects.total, file="PosteriorChain_Effects.csv")
     write.csv(Contrasts.total, file="PosteriorChain_Contrasts.csv")
     }
-
+    if(nNoise !=0){
+      write.csv(LSMeansNoise.total, file="PosteriorChain_MeansNoise.csv")
+    }
+    
     #Write Inferences files
     write.csv(Inf_PModel.total , file=paste0("Results_Model.csv"))
     if(nRand != 0){

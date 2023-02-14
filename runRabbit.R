@@ -516,7 +516,6 @@ for (u in 1:nTrait){
       for (i in 1:nrow(Covariate)){
           temp11=as.matrix(Covariate[i,])
           MeanModel[i]= mean(data[,pTrait[u]]- (temp11 %*% t(data[,pCov])) + modelfit$b_Intercept[i], na.rm=TRUE)}
-        }
     } else if ((nTreatment==0)&&(nNoise==0)&&(nCov==0)&&nRand!=0) {
       MeanModel=data.frame(modelfit$b_Intercept) 
     }  

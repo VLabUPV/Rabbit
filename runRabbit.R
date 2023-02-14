@@ -51,9 +51,9 @@ pacman::p_load(brms,emmeans,tidybayes,tidyr,magrittr,HDInterval,crayon,ggplot2,g
   }
   
   if(sub(".*\\.", "", file.name) =="csv"){
-    if (Missing == "Y"| Missing == "y"){data <- read.csv(file.name,header=T)} else {data <- read.csv(file.name,header=T, na.strings=MissingName)}}
+    if (Missing == "n"| Missing == "N"){data <- read.csv(file.name,header=T)} else {data <- read.csv(file.name,header=T, na.strings=MissingName)}}
   if(sub(".*\\.", "", file.name) =="xlsx"){
-    if (Missing == "Y"| Missing == "y"){data <- data.frame(read_excel(file.name,col_names=T))} else {data <- data.frame(read_excel(file.name,col_names=T, na=MissingName))}}  
+    if (Missing == "n"| Missing == "N"){data <- data.frame(read_excel(file.name,col_names=T))} else {data <- data.frame(read_excel(file.name,col_names=T, na=MissingName))}}  
 
   ri=nrow(data)
   cat(green(paste0("The number of rows in the data file is ", ri)))

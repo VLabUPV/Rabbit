@@ -285,7 +285,11 @@ pacman::p_load(brms,emmeans,tidybayes,tidyr,magrittr,HDInterval,crayon,ggplot2,g
   askProbRel  <- readline(sprintf("%s\n",green("Do you want to calculate probability of contrasts being greater than a relevant value for some traits (Enter Yes=Y or No=N)   ? ")))}
   if (askProbRel =="Y" |askProbRel =="y") {
     rValue<-NULL
-      for(n in 1:nTrait){
+    SameProbRel  <- readline(sprintf("%s\n",green("Do you want to use the same relevant value for all traits (Enter Yes=Y or No=N)   ? ")))
+    if (SameProbRel =="Y" |SameProbRel =="y") { 
+      SameValue <- as.numeric(readline(sprintf("%s\n",green(paste("Enter the relevant value (in case of ratio needs to be >1) ")))))
+      rValue<-rep(SameValue, nTrait)
+    }else{for(n in 1:nTrait){
         if (nTrait>1){
             askValue <-readline(sprintf("%s\n",green(paste("Do you want to calculate it for Trait ",hTrait[n], " (Enter Yes=Y or No=N)  ? "))))  
             if (askValue =="Y" | askValue =="y") {
@@ -293,7 +297,7 @@ pacman::p_load(brms,emmeans,tidybayes,tidyr,magrittr,HDInterval,crayon,ggplot2,g
             }else{rValue[n]<-0}
         }else{rValue[n] <- as.numeric(readline(sprintf("%s\n",green(paste("Enter a relevant value for Trait ", hTrait[n], " (in case of ratio needs to be >1) ")))))}
         }}
-      
+   }
   
     if (askProbRel =="Y" |askProbRel =="y") {       
       askProbSimil <-  readline(sprintf("%s\n",green("Do you want to calculate probability of similarity [-r, r] for some traits (Enter Yes=Y or No=N)   ? ")))

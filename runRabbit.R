@@ -75,6 +75,7 @@ pacman::p_load(brms,emmeans,tidybayes,tidyr,magrittr,HDInterval,crayon,ggplot2,g
     pTrait<-eval(parse(text = pTraitInString))
     hTrait <- colnames(data)[pTrait]
     cat(green(paste0(c("Traits read are", hTrait),collapse=" ")))
+    cat("\n")
   }else{
     for(n in 1:nTrait){
         hTrait[n]<- readline((sprintf("%s\n",green(paste("Enter the name of the Trait ", n," ")))))
@@ -490,7 +491,8 @@ for (u in 1:nTrait){
           colnames(iter_bylevels_Noise)<-c(paste(name.frame,hTrait[u],sep="."))
           LSMeansNoise<-data.frame(c(LSMeansNoise, iter_bylevels_Noise))
         }
-      LSMeansNoise.total<-cbind(LSMeansNoise.total,LSMeansNoise)
+      
+      LSMeansNoise.total<-data.frame(c(LSMeansNoise.total,LSMeansNoise))#este va mal
     }
     
     
@@ -742,7 +744,7 @@ cat("\n")
 ## Write down the outputs  ------------------------------------------------------------------------------------ 
 
     #Write Posterior Chains
-    write.csv(MeanModel.total, file="PosteriorChain_Means.csv")
+    write.csv(MeanModel.total, file="PosteriorChain_Model.csv")
     write.csv(SD_E.total, file="PosteriorChain_ResidualVariance.csv")
     if(nRand != 0){
       write.csv(SD_Random.total, file="PosteriorChain_RandomEffVariances.csv")
@@ -792,7 +794,7 @@ cat("\n")
     #   }
     # }
     
-    Contrasts.total <- data.frame(Contrasts.total)
+    #Plot for descriptive stats of Traits
     for (trait in 1:length(hTrait)) {
       stat <- t(matrix(round(summary(data[,pTrait[trait]])[1:6],2)))
       colnames(stat) <- c("Min","1st Qu.","Median","Mean","3rd Qu.","Max")
@@ -801,7 +803,7 @@ cat("\n")
         tab_add_title(text = paste("Descriptive analyses for trait ",hTrait[trait],sep=""), face = "bold",size = 16, padding = unit(2, "line"))
       plot <- ggplot(data,aes(data[,hTrait[trait]]))
       hist <- plot +
-        geom_histogram(stat = "bin",color="white",fill="skyblue")+
+        geom_histogram(stat = "bin",color="white",fill="skyblue", bins = 20)+
         theme_classic()+
         xlab(hTrait[trait])
       box<- plot +
@@ -811,37 +813,109 @@ cat("\n")
         coord_flip()
       total.plot <- ggarrange(hist,box,ncol=2,nrow=1)
       
-      Contrasts.tmp1 <- Contrasts.total[,grep(hTrait[trait],names(Contrasts.total))]
-      contrast.plot <- NULL
-     
-       for(treat in 1:dim(Contrasts.tmp1)[2]){
-        if(askCompare=="D"|askCompare=="d"){
-          contrast.tmp <- data.frame(Contrast=rep(names(Contrasts.tmp1)[treat],dim(Contrasts.tmp1)[1]),Difference = Contrasts.tmp1[,treat])
-          contrast.plot <- rbind(contrast.plot,contrast.tmp)
-          cPlot<- ggplot(contrast.plot,aes(y = Contrast, x = Difference, fill = after_stat(abs(x) < rValue[trait]))) +
-            stat_halfeye() +
-            theme_classic() +
-            geom_vline(xintercept = c(-rValue[trait], rValue[trait]), linetype = "dashed") +
-            scale_fill_manual(values = c("gray80", "skyblue"))+
-            theme(legend.position="none")
-        }
-        if(askCompare=="R"|askCompare=="r"){
-          contrast.tmp <- data.frame(Contrast=rep(names(Contrasts.tmp1)[treat],dim(Contrasts.tmp1)[1]),Ratio = Contrasts.tmp1[,treat])
-          contrast.plot <- rbind(contrast.plot,contrast.tmp)
-          colnames(contrast.plot) <- c("Contrast","Ratio")
-          cPlot<- ggplot(contrast.plot,aes(y = Contrast, x = Ratio, fill = after_stat(x > rValue[trait] | x < 1/rValue[trait]))) +
-            stat_halfeye() +
-            theme_classic() +
-            geom_vline(xintercept = c(1/rValue[trait], rValue[trait]), linetype = "dashed") +
-            scale_fill_manual(values = c("gray80", "skyblue"))+
-            theme(legend.position="none")
-        }
-      }
+      #write it down in the pdf
       x<- ggarrange(total.plot,table,ncol=1,nrow=2,heights=c(3,2), widths=c(2,1))
       grid.draw(x)
-      grid.draw(cPlot)
+      
+      
+      #Plot for descriptive stats of Covariates and XYPlot with the trait
+      if (nCov !=0){
+         for (covar in 1:length(hCov)) {
+            stat <- t(matrix(round(summary(data[,pCov[covar]])[1:6],2)))
+            colnames(stat) <- c("Min","1st Qu.","Median","Mean","3rd Qu.","Max")
+            table2 <- ggtexttable(stat, rows = NULL,theme=ttheme("light"))
+            table2 <- table2 %>%
+              tab_add_title(text = paste("Descriptive analyses for covariate ",hCov[covar],sep=""), face = "bold",size = 16, padding = unit(2, "line"))
+            plot <- ggplot(data,aes(data[,hCov[covar]]))
+            hist2 <- plot +
+              geom_histogram(stat = "bin",color="white",fill="skyblue",bins = 20)+
+              theme_classic()+
+              xlab(hCov[covar])
+            box2 <- plot +
+              geom_boxplot(color="black",fill="skyblue")+
+              theme_classic()+
+              xlab(hCov[covar])+
+              coord_flip()
+            xy2 <- ggplot(data,aes(x=data[,hCov[covar]], y=data[,hTrait[trait]]))+
+              geom_point(size=3, shape=21, color="black")+
+              theme_classic()+
+              xlab(hCov[covar])+
+              ylab(hTrait[trait])
+            total.plot2 <- ggarrange(hist2,box2,xy2,ncol=2,nrow=2)
+           
+            y<- ggarrange(total.plot2,table2,ncol=1,nrow=2,heights=c(3,2), widths=c(2,1))
+            grid.draw(y)
+         }
+        }
+      
+      #Plot of marginal posterior distributions of the estimates of LSMeans
+      if (nTreatment!=0){
+              LSMeans.total <- data.frame(LSMeans.total)
+              LSMeans.tmp1 <- LSMeans.total[,grep(hTrait[trait],names(LSMeans.total))]
+              head(LSMeans.tmp1)
+              lsmeans.plot <- NULL
+              for(treat in 1:dim(LSMeans.tmp1)[2]){
+                  lsmeans.tmp <- data.frame(Level=rep(names(LSMeans.tmp1)[treat],dim(LSMeans.tmp1)[1]),Mean = LSMeans.tmp1[,treat])
+                  lsmeans.plot <- rbind(lsmeans.plot,lsmeans.tmp)
+                  mPlot<- ggplot(lsmeans.plot,aes(y = Level, x = Mean)) +
+                    stat_halfeye() +
+                    theme_classic() +
+                    scale_fill_manual(values = c("gray80", "skyblue"))+
+                    theme(legend.position="none")
+                }
+      
+                grid.draw(mPlot)
+      
+      
+       #Plot of marginal posterior distributions of the Contrasts between levels of Treatments
+            Contrasts.total <- data.frame(Contrasts.total)
+            Contrasts.tmp1 <- Contrasts.total[,grep(hTrait[trait],names(Contrasts.total))]
+            contrast.plot <- NULL
+           
+              for(treat in 1:dim(Contrasts.tmp1)[2]){
+                if(askCompare=="D"|askCompare=="d"){
+                contrast.tmp <- data.frame(Contrast=rep(names(Contrasts.tmp1)[treat],dim(Contrasts.tmp1)[1]),Difference = Contrasts.tmp1[,treat])
+                contrast.plot <- rbind(contrast.plot,contrast.tmp)
+                if(askProbRel=="Y"|askProbRel=="y"){ 
+                    cPlot<- ggplot(contrast.plot,aes(y = Contrast, x = Difference, fill = after_stat(abs(x) < rValue[trait]))) +
+                      stat_halfeye() +
+                      theme_classic() +
+                      geom_vline(xintercept = c(-rValue[trait], rValue[trait]), linetype = "dashed") +
+                      scale_fill_manual(values = c("gray80", "skyblue"))+
+                      theme(legend.position="none")
+                }else{
+                    cPlot<- ggplot(contrast.plot,aes(y = Contrast, x = Difference)) +
+                    stat_halfeye() +
+                    theme_classic() +
+                    scale_fill_manual(values = c("gray80", "skyblue"))+
+                    theme(legend.position="none")}
+              }
+               
+                if(askCompare=="R"|askCompare=="r"){
+                contrast.tmp <- data.frame(Contrast=rep(names(Contrasts.tmp1)[treat],dim(Contrasts.tmp1)[1]),Ratio = Contrasts.tmp1[,treat])
+                contrast.plot <- rbind(contrast.plot,contrast.tmp)
+                colnames(contrast.plot) <- c("Contrast","Ratio")
+                if(askProbRel=="Y"|askProbRel=="y"){ 
+                    cPlot<- ggplot(contrast.plot,aes(y = Contrast, x = Ratio, fill = after_stat(x > rValue[trait] | x < 1/rValue[trait]))) +
+                      stat_halfeye() +
+                      theme_classic() +
+                      geom_vline(xintercept = c(1/rValue[trait], rValue[trait]), linetype = "dashed") +
+                      scale_fill_manual(values = c("gray80", "skyblue"))+
+                      theme(legend.position="none")
+                }else{
+                  cPlot<- ggplot(contrast.plot,aes(y = Contrast, x = Ratio)) +
+                    stat_halfeye() +
+                    theme_classic() +
+                    scale_fill_manual(values = c("gray80", "skyblue"))+
+                    theme(legend.position="none")
+                }
+             }
+                }
+                grid.draw(cPlot)
+         }
     }
-    dev.off()
+    
+dev.off()
 
 #} #Close Rabbit
 

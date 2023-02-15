@@ -18,7 +18,7 @@
 ## ---------------------------
 
 if ((!"pacman" %in% installed.packages())==TRUE){install.packages("pacman")}
-pacman::p_load(brms,emmeans,tidybayes,tidyr,magrittr,HDInterval,crayon,ggplot2,gridExtra,gtable,grid,ggpubr,cowplot)
+pacman::p_load(brms,emmeans,tidybayes,tidyr,magrittr,HDInterval,crayon,ggplot2,gridExtra,gtable,grid,ggpubr,cowplot,readxl)
 
 # library(brms)
 # library(emmeans)

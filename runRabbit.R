@@ -287,7 +287,7 @@ pacman::p_load(brms,emmeans,tidybayes,tidyr,magrittr,HDInterval,crayon,ggplot2,g
     rValue<-NULL
     SameProbRel  <- readline(sprintf("%s\n",green("Do you want to use the same relevant value for all traits (Enter Yes=Y or No=N)   ? ")))
     if (SameProbRel =="Y" |SameProbRel =="y") { 
-      SameValue <- as.numeric(readline(sprintf("%s\n",green(paste("Enter the relevant value (in case of ratio needs to be >1) ")))))
+      SameValue <- as.numeric(readline(sprintf("%s\n",green(paste("Enter the relevant value. In case of ratio needs to be >1. If you whish to consider 1/3 or 1/2 of SD type 0.5 or 0.33 ")))))
       rValue<-rep(SameValue, nTrait)
     }else{for(n in 1:nTrait){
         if (nTrait>1){
@@ -569,6 +569,10 @@ for (u in 1:nTrait){
        }
        Inf_PModel.total <- data.frame(rbind(Inf_PModel.total,Inf_PModel))
 
+       #If SameProbRel was TRUE and the user whishes to use 1/2sd or 1/3 sd re-build rValue vector here
+       if ((SameProbRel=="y" | SameProbRel=="Y") &&  (SameValue==0.33 | SameValue==0.5)) {rValue[u]<-SameValue*Inf_PModel[i,2]}
+         
+       
        
       #For Covariates  
        if (nCov!= 0){

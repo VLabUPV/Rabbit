@@ -66,27 +66,35 @@ pacman::p_load(brms,emmeans,dplyr,tidybayes,tidyr,magrittr,HDInterval,crayon,ggp
   pTrait<-NULL
   cat(green(paste0(c("Help: the header of the datafile is ", colnames(data)),collapse=" ")))
   if (nTrait>1){
-    TraitsAsString<-readline((sprintf("%s\n",green(paste("Do you want to enter the name of all Traits at once (Enter Yes=Y or No=N) ? ")))))
-  }
-  
-  if (TraitsAsString == "Y"| TraitsAsString == "y"){
-    cat(green("Enter the positions of the Traits in the datafile"))
-    pTraitInString<- readline(sprintf("%s\n",green(paste("For example, enter c(1:3) for 1,2,3; c(1,4) for 1 and 4; or c(1:3,7) for 1,2,3 and 7 "))))
-    pTrait<-eval(parse(text = pTraitInString))
-    hTrait <- colnames(data)[pTrait]
-    cat(green(paste0(c("Traits read are", hTrait),collapse=" ")))
-    cat("\n")
-  }else{
+    TraitsAsString<-readline((sprintf("%s\n",green(paste("Do you want to enter the name of all Traits at once based on their columns number in the datafile (Enter Yes=Y or No=N) ? ")))))
+         if (TraitsAsString == "Y"| TraitsAsString == "y"){
+          cat(green("Enter the positions of the Traits in the datafile"))
+          pTraitInString<- readline(sprintf("%s\n",green(paste("For example, enter c(1:3) for 1,2,3; c(1,4) for 1 and 4; or c(1:3,7) for 1,2,3 and 7 "))))
+          pTrait<-eval(parse(text = pTraitInString))
+          hTrait <- colnames(data)[pTrait]
+          cat(green(paste0(c("Traits read are", hTrait),collapse=" ")))
+          cat("\n")
+          } else {
+          for(n in 1:nTrait){
+              hTrait[n]<- readline((sprintf("%s\n",green(paste("Enter the name of the Trait ", n," ")))))
+                while (!hTrait[n]%in%colnames(data)==TRUE) {
+                  cat(green(paste0("Trait not found. Please check that spelling is correct")))
+                  hTrait[n]<- readline((sprintf("%s\n",green(paste("Enter the name of the Trait ", n," ")))))
+                }
+                pTrait[n] <- which(colnames(data)== hTrait[n])
+            }
+        }
+   } else {
     for(n in 1:nTrait){
+      hTrait[n]<- readline((sprintf("%s\n",green(paste("Enter the name of the Trait ", n," ")))))
+      while (!hTrait[n]%in%colnames(data)==TRUE) {
+        cat(green(paste0("Trait not found. Please check that spelling is correct")))
         hTrait[n]<- readline((sprintf("%s\n",green(paste("Enter the name of the Trait ", n," ")))))
-          while (!hTrait[n]%in%colnames(data)==TRUE) {
-            cat(green(paste0("Trait not found. Please check that spelling is correct")))
-            hTrait[n]<- readline((sprintf("%s\n",green(paste("Enter the name of the Trait ", n," ")))))
-          }
-        pTrait[n] <- which(colnames(data)== hTrait[n])
-     }
+      }
+      pTrait[n] <- which(colnames(data)== hTrait[n])
   }
-
+   }
+  
   cat(green(paste0("Let's define the model. Remember, all traits will be analyzed with the same model!")))
   
   nTreatment  <- as.numeric(readline(sprintf("%s\n",green("Enter the number of treatments   "))))
@@ -289,7 +297,7 @@ pacman::p_load(brms,emmeans,dplyr,tidybayes,tidyr,magrittr,HDInterval,crayon,ggp
     if (SameProbRel =="Y" |SameProbRel =="y") { 
        askFractionSD  <- readline(sprintf("%s\n",green("Do you want to use a fraction of the SD  (Enter Yes=Y or No=N)? ")))  
        if (askFractionSD =="Y" |askFractionSD =="y") { 
-                FractionSD<-readline(sprintf("%s\n",green("Enter the fraction of the SD (e.g. enter 0.33 for 1/3) ")))
+                FractionSD<-as.numeric(readline(sprintf("%s\n",green("Enter the fraction of the SD (e.g. enter 0.33 for 1/3) "))))
        }else{
          SameValue <- as.numeric(readline(sprintf("%s\n",green(paste("Enter the relevant value. In case of ratio needs to be >1.0 ")))))
          rValue<-rep(SameValue, nTrait)
@@ -574,10 +582,7 @@ for (u in 1:nTrait){
        }
        Inf_PModel.total <- data.frame(rbind(Inf_PModel.total,Inf_PModel))
 
-       #If SameProbRel was TRUE and the user whishes to use 1/2sd or 1/3 sd re-build rValue vector here
-       if (askFractionSD=="y" | askFractionSD=="Y") {rValue[u]<-FractionSD*Inf_PModel[2,1]}
-         
-       
+      
        
       #For Covariates  
        if (nCov!= 0){
@@ -668,6 +673,14 @@ for (u in 1:nTrait){
         
         
       #For Contrasts
+        
+        #If SameProbRel was TRUE and the user whishes to use 1/2sd or 1/3 sd re-build rValue vector here
+        if (askProbRel =="Y" |askProbRel =="y") {
+          if (SameProbRel =="Y" |SameProbRel =="y") {
+            if (askFractionSD=="y" | askFractionSD=="Y") {rValue[u]<-FractionSD*Inf_PModel[2,1]}
+          }
+        } 
+        
         Inf_PC<-matrix(ncol=10, nrow=ncol(Contrasts))
         colnames(Inf_PC)<-c("Estimate","sd","HPD_1","HPD_2","P0","r","Pr","Psimil","k","k_Guaranteed")  
         rownames(Inf_PC)<-colnames(Contrasts)

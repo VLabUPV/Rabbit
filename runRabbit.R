@@ -18,7 +18,7 @@
 ## ---------------------------
 
 if ((!"pacman" %in% installed.packages())==TRUE){install.packages("pacman")}
-pacman::p_load(brms,emmeans,tidybayes,tidyr,magrittr,HDInterval,crayon,ggplot2,gridExtra,gtable,grid,ggpubr,cowplot,readxl)
+pacman::p_load(brms,emmeans,dplyr,tidybayes,tidyr,magrittr,HDInterval,crayon,ggplot2,gridExtra,gtable,grid,ggpubr,cowplot,readxl,cmdstanr)
 
 # library(brms)
 # library(emmeans)
@@ -287,9 +287,16 @@ pacman::p_load(brms,emmeans,tidybayes,tidyr,magrittr,HDInterval,crayon,ggplot2,g
     rValue<-NULL
     SameProbRel  <- readline(sprintf("%s\n",green("Do you want to use the same relevant value for all traits (Enter Yes=Y or No=N)   ? ")))
     if (SameProbRel =="Y" |SameProbRel =="y") { 
-      SameValue <- as.numeric(readline(sprintf("%s\n",green(paste("Enter the relevant value. In case of ratio needs to be >1. If you whish to consider 1/3 or 1/2 of SD type 0.5 or 0.33 ")))))
-      rValue<-rep(SameValue, nTrait)
-    }else{for(n in 1:nTrait){
+       askFractionSD  <- readline(sprintf("%s\n",green("Do you want to use a fraction of the SD  (Enter Yes=Y or No=N)? ")))  
+       if (askFractionSD =="Y" |askFractionSD =="y") { 
+                FractionSD<-readline(sprintf("%s\n",green("Enter the fraction of the SD (e.g. enter 0.33 for 1/3) ")))
+       }else{
+         SameValue <- as.numeric(readline(sprintf("%s\n",green(paste("Enter the relevant value. In case of ratio needs to be >1.0 ")))))
+         rValue<-rep(SameValue, nTrait)
+      }
+  
+    }
+    else{for(n in 1:nTrait){
         if (nTrait>1){
             askValue <-readline(sprintf("%s\n",green(paste("Do you want to calculate it for Trait ",hTrait[n], " (Enter Yes=Y or No=N)  ? "))))  
             if (askValue =="Y" | askValue =="y") {
@@ -318,8 +325,7 @@ pacman::p_load(brms,emmeans,tidybayes,tidyr,magrittr,HDInterval,crayon,ggplot2,g
     #     }  
     # }
   
-  
-  
+
   
 ## Write down the formula of the equation ------------------------------------------------------------------
  # remove(eq.T,eq.C,eq.I,eq.R,eq.N, eq.total)
@@ -533,7 +539,6 @@ for (u in 1:nTrait){
         SD_E<-modelfit[,pos2]
         SD_E.total<-data.frame(c(SD_E.total,SD_E))
     
-            
     # Random effect Variance
     if (nRand!= 0) {
       SD_Random<-NULL
@@ -570,7 +575,7 @@ for (u in 1:nTrait){
        Inf_PModel.total <- data.frame(rbind(Inf_PModel.total,Inf_PModel))
 
        #If SameProbRel was TRUE and the user whishes to use 1/2sd or 1/3 sd re-build rValue vector here
-       if ((SameProbRel=="y" | SameProbRel=="Y") &&  (SameValue==0.33 | SameValue==0.5)) {rValue[u]<-SameValue*Inf_PModel[i,2]}
+       if (askFractionSD=="y" | askFractionSD=="Y") {rValue[u]<-FractionSD*Inf_PModel[2,1]}
          
        
        

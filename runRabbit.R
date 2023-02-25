@@ -17,6 +17,13 @@
 ##
 ## ---------------------------
 
+if (("devtools" %in% installed.packages())==FALSE){
+  install.packages("devtools", dependencies = TRUE,  INSTALL_opts = c("--no-lock"))
+  library(cmdstanr)
+  install_cmdstan()}
+
+if (("cmdstanr" %in% installed.packages())==FALSE){devtools::install_github("stan-dev/cmdstanr")}
+
 if ((!"pacman" %in% installed.packages())==TRUE){install.packages("pacman")}
 pacman::p_load(brms,emmeans,dplyr,tidybayes,tidyr,magrittr,HDInterval,crayon,ggplot2,gridExtra,gtable,grid,ggpubr,cowplot,readxl,cmdstanr)
 
@@ -29,7 +36,7 @@ pacman::p_load(brms,emmeans,dplyr,tidybayes,tidyr,magrittr,HDInterval,crayon,ggp
 # library(HDInterval)
 # library(crayon)
 # library(readxl)
-
+library(cmdstanr)
 
 #runRabbit <- function() {
   rm(list = ls())
@@ -202,7 +209,8 @@ pacman::p_load(brms,emmeans,dplyr,tidybayes,tidyr,magrittr,HDInterval,crayon,ggp
         hRand[n] <- readline(sprintf("%s\n",green(paste("Enter the name of the random effect ", n, " "))))
       }
       pRand[n] <- which(colnames(data)== hRand[n])
-  }}
+     }
+    }
   
   
   
@@ -283,8 +291,8 @@ pacman::p_load(brms,emmeans,dplyr,tidybayes,tidyr,magrittr,HDInterval,crayon,ggp
 
   
 ## Define Inferences to be calculated from Posterior Chains -------------------------------------------------------
-  probHPD     <- as.numeric(readline(sprintf("%s\n",green("Enter the probability for the HPD interval (for example 0.95)   "))))
-  probK       <- as.numeric(readline(sprintf("%s\n",green("Enter the probability for the guaranteed value k (for example 0.80)   "))))
+  probHPD     <- as.numeric(readline(sprintf("%s\n",green("Enter the probability for the HPD interval (eg 0.95)   "))))
+  probK       <- as.numeric(readline(sprintf("%s\n",green("Enter the probability for the guaranteed value k (eg 0.80)   "))))
   
   if (nTreatment!=0){
   askProbRel  <- readline(sprintf("%s\n",green("Do you want to calculate probability of contrasts being greater than a relevant value for some traits (Enter Yes=Y or No=N)   ? ")))
@@ -297,7 +305,7 @@ pacman::p_load(brms,emmeans,dplyr,tidybayes,tidyr,magrittr,HDInterval,crayon,ggp
     if (SameProbRel =="Y" |SameProbRel =="y") { 
        askFractionSD  <- readline(sprintf("%s\n",green("Do you want to use a fraction of the SD  (Enter Yes=Y or No=N)? ")))  
        if (askFractionSD =="Y" |askFractionSD =="y") { 
-                FractionSD<-as.numeric(readline(sprintf("%s\n",green("Enter the fraction of the SD (e.g. enter 0.33 for 1/3) "))))
+                FractionSD<-as.numeric(readline(sprintf("%s\n",green("Enter the fraction of the SD (eg enter 0.33 for 1/3) "))))
        }else{
          SameValue <- as.numeric(readline(sprintf("%s\n",green(paste("Enter the relevant value. In case of ratio needs to be >1.0 ")))))
          rValue<-rep(SameValue, nTrait)
@@ -531,11 +539,12 @@ for (u in 1:nTrait){
     } else if ((nTreatment==0)&&(nNoise!=0)){ #If there is no treatment but noise, compute the mean from LSMeansNoise
     MeanModel=data.frame(rowMeans(LSMeansNoise[1:nlevels_Noise[1]]))
     } else if ((nTreatment==0)&&(nNoise==0)&&(nCov!=0)) {
-    #If there is no treatment or noise but there are covariates do it this way
-      MeanModel<-NULL 
+       #If there is no treatment or noise but there are covariates do it this way
+      MeanModel<-data.frame() 
       for (i in 1:nrow(Covariate)){
-          temp11=as.matrix(Covariate[i,])
-          MeanModel[i]= mean(data[,pTrait[u]]- (temp11 %*% t(data[,pCov])) + modelfit$b_Intercept[i], na.rm=TRUE)}
+          #temp11=data[,pTrait[u]]- (Covariate[i,] %*% t(data[,pCov])) + modelfit$b_Intercept[i] #I think we do not need to add intercept
+          temp11=data[,pTrait[u]]- (as.matrix(Covariate[i,]) %*% t(data[,pCov])) + modelfit$b_Intercept[i]
+          MeanModel[i,1]= mean(temp11, na.rm=TRUE)}
     } else if ((nTreatment==0)&&(nNoise==0)&&(nCov==0)&&nRand!=0) {
       MeanModel=data.frame(modelfit$b_Intercept) 
     }  

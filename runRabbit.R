@@ -58,7 +58,7 @@ pacman::p_load(brms,emmeans,dplyr,tidybayes,tidyr,magrittr,HDInterval,crayon,ggp
       Missing     <- readline(sprintf("%s\n",green("Has the data file missing values (Enter Yes=Y or No=N) ?  ")))} 
         
   if(Missing == "Y"| Missing == "y"){
-  MissingName <- readline(sprintf("%s\n",green("Please enter the missing value (if its a blank enter a space) ")))
+  MissingName <- readline(sprintf("%s\n",green("Please enter the missing value. If its a blank enter a space ")))
   }
   
   if(sub(".*\\.", "", file.name) =="csv"){
@@ -309,7 +309,7 @@ pacman::p_load(brms,emmeans,dplyr,tidybayes,tidyr,magrittr,HDInterval,crayon,ggp
     if (SameProbRel =="Y" |SameProbRel =="y") { 
        askFractionSD  <- readline(sprintf("%s\n",green("Do you want to use a fraction of the SD  (Enter Yes=Y or No=N)? ")))  
        if (askFractionSD =="Y" |askFractionSD =="y") { 
-                FractionSD<-as.numeric(readline(sprintf("%s\n",green("Enter the fraction of the SD (eg enter 0.33 for 1/3) "))))
+                FractionSD<-as.numeric(readline(sprintf("%s\n",green("Enter the fraction of the SD, for example enter 0.33 for 1/3 "))))
        }else{
          SameValue <- as.numeric(readline(sprintf("%s\n",green(paste("Enter the relevant value. In case of ratio needs to be >1.0 ")))))
          rValue<-rep(SameValue, nTrait)
@@ -365,9 +365,10 @@ pacman::p_load(brms,emmeans,dplyr,tidybayes,tidyr,magrittr,HDInterval,crayon,ggp
   eq.C <- NULL 
   eq.C.name <- NULL
   if(nCov != 0){
-    eq.C.name <- paste(paste("b.",hCov,sep=""),collapse =" + ")
+    eq.C.name <- paste(paste("b???",hCov,sep=""),collapse =" + ")
     eq.C <- paste(hCov,collapse =" + ")
   }
+  
   eq.R <- NULL #Part of the equation for Random
   eq.R.name<-NULL
   if(nRand != 0){
@@ -908,10 +909,11 @@ cat("\n")
       
        #Plot of marginal posterior distributions of the Contrasts between levels of Treatments
             Contrasts.total <- data.frame(Contrasts.total)
-            Contrasts.tmp1 <- Contrasts.total[,grep(hTrait[trait],names(Contrasts.total))]
+            Contrasts.tmp1 <- data.frame(Contrasts.total[,grep(hTrait[trait],names(Contrasts.total))])
+            names(Contrasts.tmp1)<-colnames(Contrasts.total[grep(hTrait[trait],names(Contrasts.total))])
             contrast.plot <- NULL
            
-              for(treat in 1:dim(Contrasts.tmp1)[2]){
+            for(treat in 1:dim(Contrasts.tmp1)[2]){
                 if(askCompare=="D"|askCompare=="d"){
                 contrast.tmp <- data.frame(Contrast=rep(names(Contrasts.tmp1)[treat],dim(Contrasts.tmp1)[1]),Difference = Contrasts.tmp1[,treat])
                 contrast.plot <- rbind(contrast.plot,contrast.tmp)

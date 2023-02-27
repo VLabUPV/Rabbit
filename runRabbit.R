@@ -28,7 +28,7 @@ if (("devtools" %in% installed.packages())==FALSE){
 }
 
 if ((!"pacman" %in% installed.packages())==TRUE){install.packages("pacman")}
-pacman::p_load(brms,emmeans,dplyr,tidybayes,tidyr,magrittr,HDInterval,crayon,ggplot2,gridExtra,gtable,grid,ggpubr,cowplot,readxl,xlsx)
+pacman::p_load(brms,emmeans,dplyr,tidybayes,tidyr,magrittr,HDInterval,crayon,ggplot2,gridExtra,gtable,grid,ggpubr,cowplot,readxl,xlsx, openxlsx)
 
 # library(xlsx)
 # library(brms)
@@ -41,15 +41,16 @@ pacman::p_load(brms,emmeans,dplyr,tidybayes,tidyr,magrittr,HDInterval,crayon,ggp
 # library(crayon)
 # library(readxl)
 # library(cmdstanr)
+# library(openxlsx)
 
 #runRabbit <- function() {
   rm(list = ls())
 ## Read the data from file name ----------------------------------------------------------------
-  file.name <- readline(sprintf("%s\n",green("Enter the name of the datafile with its extension (.csv or .xlsx) ")))
+  file.name <- readline(sprintf("%s\n",green("Enter the name of the datafile with its extension .csv or .xlsx ")))
 
   while(!file.exists(file.name)==TRUE) {
     print(paste("DATA FILE",file.name,"NO FOUND",sep=" "))
-    file.name <- readline(sprintf("%s\n",green("Enter the name of the datafile with its extension (.csv or .xlsx) ")))
+    file.name <- readline(sprintf("%s\n",green("Enter the name of the datafile with its extension .csv or .xlsx ")))
   }
   
   Missing     <- readline(sprintf("%s\n",green("Has the data file missing values (Enter Yes=Y or No=N) ?  ")))
@@ -234,6 +235,8 @@ pacman::p_load(brms,emmeans,dplyr,tidybayes,tidyr,magrittr,HDInterval,crayon,ggp
       cat("\n")
       fi=nTreatment+nNoise
       NTables=((fi*fi) - fi)/2
+      tableset<-list() 
+      t<-0
       
       if ((nNoise != 0) && (nTreatment !=0)) {FE<-data.frame(data[,c(pTreatment, pNoise)])
       } else if (nNoise == 0)  {
@@ -242,15 +245,19 @@ pacman::p_load(brms,emmeans,dplyr,tidybayes,tidyr,magrittr,HDInterval,crayon,ggp
           FE<-data.frame(data[,c(pNoise)])} 
       
         for (m in 1:ncol(FE)){FE[,m] <- paste(names(FE)[m],FE[,m],sep="")}
-        for (m in 1:ncol(FE)){
+          for (m in 1:ncol(FE)){
             for (j in (m+1):ncol(FE)) {
               if(j>ncol(FE)) break
+              t<-t+1
               print(paste(colnames(FE)[m],colnames(FE)[j], sep=" vs "))
-              print(table(FE[,m],FE[,j])) }
-        }
+              print(table(FE[,m],FE[,j]))
+              tableset[[paste0("Sheet", t)]] <- table(FE[,m],FE[,j])
+            }
+          }
+      openxlsx::write.xlsx(tableset, file = 'ContingencyTables.xlsx') 
+      
   } else {
       print(paste0(c("Contingency tables cannot be created because there is none or only 1 effect")))}
-    
   
 ## Define Priors --------------------------------------------------------------------------------------
 #  set normal (0, 10*sd)
@@ -305,7 +312,7 @@ pacman::p_load(brms,emmeans,dplyr,tidybayes,tidyr,magrittr,HDInterval,crayon,ggp
   askProbRel  <- readline(sprintf("%s\n",green(paste("Do you want to calculate probability of contrasts being greater than a","\n", " relevant value for some traits (Enter Yes=Y or No=N)   ? "))))}
   if (askProbRel =="Y" |askProbRel =="y") {
     rValue<-NULL
-    SameProbRel  <- readline(sprintf("%s\n",green("Do you want to use the same relevant value for all traits (Enter Yes=Y or No=N)   ? ")))
+    if (nTrait>1){SameProbRel  <- readline(sprintf("%s\n",green("Do you want to use the same relevant value for all traits (Enter Yes=Y or No=N)   ? ")))}else{SameProbRel="Y"}
     if (SameProbRel =="Y" |SameProbRel =="y") { 
        askFractionSD  <- readline(sprintf("%s\n",green("Do you want to use a fraction of the SD  (Enter Yes=Y or No=N)? ")))  
        if (askFractionSD =="Y" |askFractionSD =="y") { 
@@ -327,7 +334,7 @@ pacman::p_load(brms,emmeans,dplyr,tidybayes,tidyr,magrittr,HDInterval,crayon,ggp
    }
   
     if (askProbRel =="Y" |askProbRel =="y") {       
-      askProbSimil <-  readline(sprintf("%s\n",green("Do you want to calculate probability of similarity [-r, r] for some traits (Enter Yes=Y or No=N)   ? ")))
+      askProbSimil <-  readline(sprintf("%s\n",green(paste("Do you want to calculate probability of similarity [-r, r]","\n","for some traits (Enter Yes=Y or No=N)   ? "))))
       }
   }   
   
@@ -365,7 +372,7 @@ pacman::p_load(brms,emmeans,dplyr,tidybayes,tidyr,magrittr,HDInterval,crayon,ggp
   eq.C <- NULL 
   eq.C.name <- NULL
   if(nCov != 0){
-    eq.C.name <- paste(paste("b???",hCov,sep=""),collapse =" + ")
+    eq.C.name <- paste(paste("b*",hCov,sep=""),collapse =" + ")
     eq.C <- paste(hCov,collapse =" + ")
   }
   
@@ -601,7 +608,7 @@ for (u in 1:nTrait){
       #For Covariates  
        if (nCov!= 0){
               Inf_PCov<-matrix(ncol=7, nrow=ncol(Covariate))
-              colnames(Inf_PCov)<-c("Estimate","sd","HPD_1","HPD_2","P0","k","k_Guaranteed")  
+              colnames(Inf_PCov)<-c("Estimate","sd","HPD_1","HPD_2","P0","Pk","k_Guaranteed")  
               rownames(Inf_PCov)<-colnames(Covariate)
               for (i in 1:ncol(Covariate)) {
                 
@@ -630,7 +637,7 @@ for (u in 1:nTrait){
         
         #For Effects
         Inf_PE<-matrix(ncol=7, nrow=ncol(Effects))
-        colnames(Inf_PE)<-c("Estimate","sd","HPD_1","HPD_2","P0","k","k_Guaranteed")  
+        colnames(Inf_PE)<-c("Estimate","sd","HPD_1","HPD_2","P0","Pk","k_Guaranteed")  
         rownames(Inf_PE)<-colnames(Effects)
         for (i in 1:ncol(Effects)) {
           
@@ -659,7 +666,7 @@ for (u in 1:nTrait){
     
         #For LSMEANS
         Inf_PM<-matrix(ncol=7, nrow=ncol(LSMeans))
-        colnames(Inf_PM)<-c("Estimate","sd","HPD_1","HPD_2","P0","k","k_Guaranteed")  
+        colnames(Inf_PM)<-c("Estimate","sd","HPD_1","HPD_2","P0","Pk","k_Guaranteed")  
         rownames(Inf_PM)<-colnames(LSMeans)
         for (i in 1:ncol(LSMeans)) {
           
@@ -696,7 +703,7 @@ for (u in 1:nTrait){
         } 
         
         Inf_PC<-matrix(ncol=10, nrow=ncol(Contrasts))
-        colnames(Inf_PC)<-c("Estimate","sd","HPD_1","HPD_2","P0","r","Pr","Psimil","k","k_Guaranteed")  
+        colnames(Inf_PC)<-c("Estimate","sd","HPD_1","HPD_2","P0","r","Pr","Psimil","Pk","k_Guaranteed")  
         rownames(Inf_PC)<-colnames(Contrasts)
         for (i in 1:ncol(Contrasts)) {
           hist(Contrasts[,i])
@@ -818,7 +825,7 @@ cat("\n")
 cat("\n")
 cat(green("Progam finsihed!! :) "))
 cat("\n")
-
+    
     #Save Plots
     pdf.name <- readline(sprintf("%s\n",green("Enter the name for the pdf file containing the graphs: ")))
     pdf(paste(pdf.name,".pdf",sep=""), height=8, width=8)

@@ -19,14 +19,18 @@
 
 if (("devtools" %in% installed.packages())==FALSE){
   install.packages("devtools", dependencies = TRUE,  INSTALL_opts = c("--no-lock"))
+  devtools::install_github("stan-dev/cmdstanr")
   library(cmdstanr)
-  install_cmdstan()}
-
-if (("cmdstanr" %in% installed.packages())==FALSE){devtools::install_github("stan-dev/cmdstanr")}
+  check_cmdstan_toolchain(fix=TRUE)
+  cmdstan_default_install_path()
+  install_cmdstan()
+  #set_cmdstan_path(path="C:/Users/ablasco/Documents/.cmdstan/cmdstan-2.31.0") 
+}
 
 if ((!"pacman" %in% installed.packages())==TRUE){install.packages("pacman")}
-pacman::p_load(brms,emmeans,dplyr,tidybayes,tidyr,magrittr,HDInterval,crayon,ggplot2,gridExtra,gtable,grid,ggpubr,cowplot,readxl,cmdstanr)
+pacman::p_load(brms,emmeans,dplyr,tidybayes,tidyr,magrittr,HDInterval,crayon,ggplot2,gridExtra,gtable,grid,ggpubr,cowplot,readxl,xlsx)
 
+# library(xlsx)
 # library(brms)
 # library(emmeans)
 # library(dplyr)
@@ -36,7 +40,7 @@ pacman::p_load(brms,emmeans,dplyr,tidybayes,tidyr,magrittr,HDInterval,crayon,ggp
 # library(HDInterval)
 # library(crayon)
 # library(readxl)
-library(cmdstanr)
+# library(cmdstanr)
 
 #runRabbit <- function() {
   rm(list = ls())
@@ -291,14 +295,14 @@ library(cmdstanr)
 
   
 ## Define Inferences to be calculated from Posterior Chains -------------------------------------------------------
-  probHPD     <- as.numeric(readline(sprintf("%s\n",green("Enter the probability for the HPD interval (eg 0.95)   "))))
-  probK       <- as.numeric(readline(sprintf("%s\n",green("Enter the probability for the guaranteed value k (eg 0.80)   "))))
+  probHPD     <- as.numeric(readline(sprintf("%s\n",green("Enter the probability for the HPD interval, for example 0.95   "))))
+  probK       <- as.numeric(readline(sprintf("%s\n",green("Enter the probability for the guaranteed value k, for example 0.80   "))))
   
   if (nTreatment!=0){
-  askProbRel  <- readline(sprintf("%s\n",green("Do you want to calculate probability of contrasts being greater than a relevant value for some traits (Enter Yes=Y or No=N)   ? ")))
+  askProbRel  <- readline(sprintf("%s\n",green(paste("Do you want to calculate probability of contrasts being greater than a","\n", "relevant value for some traits (Enter Yes=Y or No=N)   ? "))))
   while((askProbRel!= "y") && (askProbRel!= "Y") && (askProbRel!= "n") && (askProbRel!= "N") ==TRUE){ 
   print(paste("Weird response, try again!"))
-  askProbRel  <- readline(sprintf("%s\n",green("Do you want to calculate probability of contrasts being greater than a relevant value for some traits (Enter Yes=Y or No=N)   ? ")))}
+  askProbRel  <- readline(sprintf("%s\n",green(paste("Do you want to calculate probability of contrasts being greater than a","\n", " relevant value for some traits (Enter Yes=Y or No=N)   ? "))))}
   if (askProbRel =="Y" |askProbRel =="y") {
     rValue<-NULL
     SameProbRel  <- readline(sprintf("%s\n",green("Do you want to use the same relevant value for all traits (Enter Yes=Y or No=N)   ? ")))
@@ -316,9 +320,9 @@ library(cmdstanr)
         if (nTrait>1){
             askValue <-readline(sprintf("%s\n",green(paste("Do you want to calculate it for Trait ",hTrait[n], " (Enter Yes=Y or No=N)  ? "))))  
             if (askValue =="Y" | askValue =="y") {
-            rValue[n] <- as.numeric(readline(sprintf("%s\n",green(paste("Enter a relevant value for Trait ", hTrait[n], " (in case of ratio needs to be >1) ")))))
+            rValue[n] <- as.numeric(readline(sprintf("%s\n",green(paste("Enter a relevant value for Trait ", hTrait[n], ". In case of ratio needs to be >1 ")))))
             }else{rValue[n]<-0}
-        }else{rValue[n] <- as.numeric(readline(sprintf("%s\n",green(paste("Enter a relevant value for Trait ", hTrait[n], " (in case of ratio needs to be >1) ")))))}
+        }else{rValue[n] <- as.numeric(readline(sprintf("%s\n",green(paste("Enter a relevant value for Trait ", hTrait[n], ". In case of ratio needs to be >1 ")))))}
         }}
    }
   
@@ -361,7 +365,7 @@ library(cmdstanr)
   eq.C <- NULL 
   eq.C.name <- NULL
   if(nCov != 0){
-    eq.C.name <- paste(paste("b*",hCov,sep=""),collapse =" + ")
+    eq.C.name <- paste(paste("b.",hCov,sep=""),collapse =" + ")
     eq.C <- paste(hCov,collapse =" + ")
   }
   eq.R <- NULL #Part of the equation for Random
@@ -779,35 +783,35 @@ cat("\n")
 ## Write down the outputs  ------------------------------------------------------------------------------------ 
 
     #Write Posterior Chains
-    write.csv(MeanModel.total, file="PosteriorChain_Model.csv")
-    write.csv(SD_E.total, file="PosteriorChain_ResidualVariance.csv")
+    write.xlsx(MeanModel.total, file="PosteriorChain_Model.xlsx")
+    write.xlsx(SD_E.total, file="PosteriorChain_ResidualVariance.xlsx")
     if(nRand != 0){
-      write.csv(SD_Random.total, file="PosteriorChain_RandomEffVariances.csv")
+      write.xlsx(SD_Random.total, file="PosteriorChain_RandomEffVariances.xlsx")
     }
     if(nCov != 0){
-      write.csv(Covariate.total, file="PosteriorChain_Covariate.csv")
+      write.xlsx(Covariate.total, file="PosteriorChain_Covariate.xlsx")
     }
     if(nTreatment !=0){
-    write.csv(LSMeans.total, file="PosteriorChain_Means.csv")
-    write.csv(Effects.total, file="PosteriorChain_Effects.csv")
-    write.csv(Contrasts.total, file="PosteriorChain_Contrasts.csv")
+    write.xlsx(LSMeans.total, file="PosteriorChain_Means.xlsx")
+    write.xlsx(Effects.total, file="PosteriorChain_Effects.xlsx")
+    write.xlsx(Contrasts.total, file="PosteriorChain_Contrasts.xlsx")
     }
     if(nNoise !=0){
-      write.csv(LSMeansNoise.total, file="PosteriorChain_MeansNoise.csv")
+      write.xlsx(LSMeansNoise.total, file="PosteriorChain_MeansNoise.xlsx")
     }
     
     #Write Inferences files
-    write.csv(Inf_PModel.total , file=paste0("Results_Model.csv"))
+    write.xlsx(Inf_PModel.total , file=paste0("Results_Model.xlsx"))
     if(nRand != 0){
-      write.csv(Inf_PRandom.total, file=paste0("Results_RandomEffects.csv"))
+      write.xlsx(Inf_PRandom.total, file=paste0("Results_RandomEffects.xlsx"))
     }
     if(nCov != 0){
-      write.csv(Inf_PCov.total, file=paste0("Results_Covariates.csv"))
+      write.xlsx(Inf_PCov.total, file=paste0("Results_Covariates.xlsx"))
     }
     if(nTreatment !=0){
-    write.csv(Inf_PE.total, file=paste0("Results_Effects.csv"))
-    write.csv(Inf_PM.total, file=paste0("Results_Means.csv"))
-    write.csv(Inf_PC.total, file=paste0("Results_Contrasts.csv"))
+    write.xlsx(Inf_PE.total, file=paste0("Results_Effects.xlsx"))
+    write.xlsx(Inf_PM.total, file=paste0("Results_Means.xlsx"))
+    write.xlsx(Inf_PC.total, file=paste0("Results_Contrasts.xlsx"))
     }
     
 cat("\n")

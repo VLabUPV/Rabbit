@@ -43,6 +43,17 @@ pacman::p_load(brms,emmeans,dplyr,tidybayes,tidyr,magrittr,HDInterval,crayon,ggp
 # library(cmdstanr)
 # library(openxlsx)
 
+cat(green(paste0
+          ("                                                       "),"\n", 
+          ("======================================================="),"\n", 
+          ("                                                       "),"\n", 
+          ("                   RABBIT                              "),"\n", 
+          ("                 Version 1.0                           "),"\n", 
+          ("                                                       "),"\n", 
+          ("======================================================="),"\n",
+          ("                                                       ")))  
+
+
 #runRabbit <- function() {
   rm(list = ls())
 ## Read the data from file name ----------------------------------------------------------------
@@ -53,10 +64,10 @@ pacman::p_load(brms,emmeans,dplyr,tidybayes,tidyr,magrittr,HDInterval,crayon,ggp
     file.name <- readline(sprintf("%s\n",green("Enter the name of the datafile with its extension .csv or .xlsx ")))
   }
   
-  Missing     <- readline(sprintf("%s\n",green("Has the data file missing values (Enter Yes=Y or No=N) ?  ")))
+  Missing     <- readline(sprintf("%s\n",green("Has the data file missing values? (Enter Yes=Y or No=N) ")))
   while((Missing!= "y") && (Missing!= "n") && (Missing!= "Y") && (Missing!= "N") ==TRUE){ 
       print(paste("Weird response, try again!"))
-      Missing     <- readline(sprintf("%s\n",green("Has the data file missing values (Enter Yes=Y or No=N) ?  ")))} 
+      Missing     <- readline(sprintf("%s\n",green("Has the data file missing values? (Enter Yes=Y or No=N) ")))} 
         
   if(Missing == "Y"| Missing == "y"){
   MissingName <- readline(sprintf("%s\n",green("Please enter the missing value. If its a blank enter a space ")))
@@ -78,7 +89,7 @@ pacman::p_load(brms,emmeans,dplyr,tidybayes,tidyr,magrittr,HDInterval,crayon,ggp
   pTrait<-NULL
   cat(green(paste0(c("Help: the header of the datafile is ", colnames(data)),collapse=" ")))
   if (nTrait>1){
-    TraitsAsString<-readline((sprintf("%s\n",green(paste("Do you want to enter the name of all Traits at once based on their columns number in the datafile (Enter Yes=Y or No=N) ? ")))))
+    TraitsAsString<-readline((sprintf("%s\n",green(paste("Do you want to enter the name of all Traits at once based on their columns number in the datafile? (Enter Yes=Y or No=N) ")))))
          if (TraitsAsString == "Y"| TraitsAsString == "y"){
           cat(green("Enter the positions of the Traits in the datafile"))
           pTraitInString<- readline(sprintf("%s\n",green(paste("For example, enter c(1:3) for 1,2,3; c(1,4) for 1 and 4; or c(1:3,7) for 1,2,3 and 7 "))))
@@ -254,7 +265,7 @@ pacman::p_load(brms,emmeans,dplyr,tidybayes,tidyr,magrittr,HDInterval,crayon,ggp
               tableset[[paste0("Sheet", t)]] <- table(FE[,m],FE[,j])
             }
           }
-      openxlsx::write.xlsx(tableset, file = 'ContingencyTables.xlsx') 
+      openxlsx::write.xlsx(tableset, file = 'ContingencyTables.xlsx', rowNames=T) 
       
   } else {
       print(paste0(c("Contingency tables cannot be created because there is none or only 1 effect")))}
@@ -294,7 +305,7 @@ pacman::p_load(brms,emmeans,dplyr,tidybayes,tidyr,magrittr,HDInterval,crayon,ggp
       lag    <- as.numeric(readline(sprintf("%s\n",green("Enter the lag between samples   "))))
     } else { #Default parameters
       Seed = 1234  
-      chain = 2
+      chain = 1
       iter = 30000
       burnin = 5000
       lag = 10
@@ -306,13 +317,14 @@ pacman::p_load(brms,emmeans,dplyr,tidybayes,tidyr,magrittr,HDInterval,crayon,ggp
   probK       <- as.numeric(readline(sprintf("%s\n",green("Enter the probability for the guaranteed value k, for example 0.80   "))))
   
   if (nTreatment!=0){
-  askProbRel  <- readline(sprintf("%s\n",green(paste("Do you want to calculate probability of contrasts being greater than a","\n", "relevant value for some traits (Enter Yes=Y or No=N)   ? "))))
+  askProbRel  <- readline(sprintf("%s\n",green(paste("Do you want to calculate probability of contrasts being greater than a","\n", "relevant value for some traits? (Enter Yes=Y or No=N) "))))
   while((askProbRel!= "y") && (askProbRel!= "Y") && (askProbRel!= "n") && (askProbRel!= "N") ==TRUE){ 
   print(paste("Weird response, try again!"))
-  askProbRel  <- readline(sprintf("%s\n",green(paste("Do you want to calculate probability of contrasts being greater than a","\n", " relevant value for some traits (Enter Yes=Y or No=N)   ? "))))}
+  askProbRel  <- readline(sprintf("%s\n",green(paste("Do you want to calculate probability of contrasts being greater than a","\n", " relevant value for some traits? (Enter Yes=Y or No=N) "))))}
   if (askProbRel =="Y" |askProbRel =="y") {
     rValue<-NULL
-    if (nTrait>1){SameProbRel  <- readline(sprintf("%s\n",green("Do you want to use the same relevant value for all traits (Enter Yes=Y or No=N)   ? ")))}else{SameProbRel="Y"}
+    if (nTrait>1){SameProbRel  <- readline(sprintf("%s\n",green("Do you want to use the same relevant value (or sd fraction) for all traits? (Enter Yes=Y or No=N) ")))}else{SameProbRel="Y"}
+    
     if (SameProbRel =="Y" |SameProbRel =="y") { 
        askFractionSD  <- readline(sprintf("%s\n",green("Do you want to use a fraction of the SD  (Enter Yes=Y or No=N)? ")))  
        if (askFractionSD =="Y" |askFractionSD =="y") { 
@@ -325,7 +337,7 @@ pacman::p_load(brms,emmeans,dplyr,tidybayes,tidyr,magrittr,HDInterval,crayon,ggp
     }
     else{for(n in 1:nTrait){
         if (nTrait>1){
-            askValue <-readline(sprintf("%s\n",green(paste("Do you want to calculate it for Trait ",hTrait[n], " (Enter Yes=Y or No=N)  ? "))))  
+            askValue <-readline(sprintf("%s\n",green(paste("Do you want to calculate it for Trait ",hTrait[n], "? (Enter Yes=Y or No=N) "))))  
             if (askValue =="Y" | askValue =="y") {
             rValue[n] <- as.numeric(readline(sprintf("%s\n",green(paste("Enter a relevant value for Trait ", hTrait[n], ". In case of ratio needs to be >1 ")))))
             }else{rValue[n]<-0}
@@ -334,7 +346,7 @@ pacman::p_load(brms,emmeans,dplyr,tidybayes,tidyr,magrittr,HDInterval,crayon,ggp
    }
   
     if (askProbRel =="Y" |askProbRel =="y") {       
-      askProbSimil <-  readline(sprintf("%s\n",green(paste("Do you want to calculate probability of similarity [-r, r]","\n","for some traits (Enter Yes=Y or No=N)   ? "))))
+      askProbSimil <-  readline(sprintf("%s\n",green(paste("Do you want to calculate probability of similarity [-r, r]","\n","for some traits? (Enter Yes=Y or No=N) "))))
       }
   }   
   
@@ -440,8 +452,8 @@ for (u in 1:nTrait){
              silent  = 2,
              refresh = 0,
              backend = "cmdstanr",
-             threads = threading(5),
-             seed    = 1234)
+             threads = threading(1),
+             seed    = NA)
             
 
  
@@ -789,39 +801,64 @@ cat("\n")
   
   
 ## Write down the outputs  ------------------------------------------------------------------------------------ 
+  
+  
 
-    #Write Posterior Chains
-    write.xlsx(MeanModel.total, file="PosteriorChain_Model.xlsx")
-    write.xlsx(SD_E.total, file="PosteriorChain_ResidualVariance.xlsx")
+  #Write Posterior Chains
+  askPChain<-readline(sprintf("%s\n",green("Do you want the Posterior Chains?  (Enter Yes=Y or No=N)     ")))
+  if (askPChain =="Y" | askPChain =="y") {   
+    OUT <- createWorkbook()
+          addWorksheet(OUT, "Model")
+          writeData(OUT, sheet = "Model", x = MeanModel.total, colNames = T, rowNames = T)
+          addWorksheet(OUT, "ResidualVariance")
+          writeData(OUT, sheet = "ResidualVariance", x = SD_E.total, colNames = T, rowNames = T)
+          
+         if(nRand != 0){
+           addWorksheet(OUT, "RandomSD")
+           writeData(OUT, sheet = "RandomSD", x = SD_Random.total, colNames = T, rowNames = T)
+          }
+          if(nCov != 0){
+            addWorksheet(OUT, "Covariate")
+            writeData(OUT, sheet = "Covariate", x = Covariate.total, colNames = T, rowNames = T) 
+          }
+          if(nTreatment !=0){
+            addWorksheet(OUT, "Means")
+            writeData(OUT, sheet = "Means", x = LSMeans.total, colNames = T, rowNames = T) 
+            addWorksheet(OUT, "Effects")
+            writeData(OUT, sheet = "Effects", x = Effects.total, colNames = T, rowNames = T) 
+            addWorksheet(OUT, "Contrasts")
+            writeData(OUT, sheet = "Contrasts", x = Contrasts.total, colNames = T, rowNames = T) 
+           }
+          if(nNoise !=0){
+            addWorksheet(OUT, "MeansNoise")
+            writeData(OUT, sheet = "MeansNoise", x = LSMeansNoise.total, colNames = T, rowNames = T) 
+          }
+          saveWorkbook(OUT, "PosteriorChains.xlsx")
+    }
+  
+  
+   #Write Inferences files
+   RESULT <- createWorkbook()
+   addWorksheet(RESULT, "Model")
+   writeData(RESULT, sheet = "Model", x =Inf_PModel.total, colNames = T, rowNames = T)
+   
     if(nRand != 0){
-      write.xlsx(SD_Random.total, file="PosteriorChain_RandomEffVariances.xlsx")
+      addWorksheet(RESULT, "RandomSD")
+      writeData(RESULT, sheet = "RandomSD", x =Inf_PRandom.total, colNames = T, rowNames = T)
     }
     if(nCov != 0){
-      write.xlsx(Covariate.total, file="PosteriorChain_Covariate.xlsx")
+      addWorksheet(RESULT, "Covariates")
+      writeData(RESULT, sheet = "Covariates", x =Inf_PCov.total, colNames = T, rowNames = T)
     }
     if(nTreatment !=0){
-    write.xlsx(LSMeans.total, file="PosteriorChain_Means.xlsx")
-    write.xlsx(Effects.total, file="PosteriorChain_Effects.xlsx")
-    write.xlsx(Contrasts.total, file="PosteriorChain_Contrasts.xlsx")
-    }
-    if(nNoise !=0){
-      write.xlsx(LSMeansNoise.total, file="PosteriorChain_MeansNoise.xlsx")
-    }
-    
-    #Write Inferences files
-    write.xlsx(Inf_PModel.total , file=paste0("Results_Model.xlsx"))
-    if(nRand != 0){
-      write.xlsx(Inf_PRandom.total, file=paste0("Results_RandomEffects.xlsx"))
-    }
-    if(nCov != 0){
-      write.xlsx(Inf_PCov.total, file=paste0("Results_Covariates.xlsx"))
-    }
-    if(nTreatment !=0){
-    write.xlsx(Inf_PE.total, file=paste0("Results_Effects.xlsx"))
-    write.xlsx(Inf_PM.total, file=paste0("Results_Means.xlsx"))
-    write.xlsx(Inf_PC.total, file=paste0("Results_Contrasts.xlsx"))
-    }
-    
+      addWorksheet(RESULT, "Effects")
+      writeData(RESULT, sheet = "Effects", x =Inf_PE.total, colNames = T, rowNames = T)
+      addWorksheet(RESULT, "Mean")
+      writeData(RESULT, sheet = "Mean", x =Inf_PM.total, colNames = T, rowNames = T)
+      addWorksheet(RESULT, "Contrasts")
+      writeData(RESULT, sheet = "Contrasts", x =Inf_PC.total, colNames = T, rowNames = T)
+     }
+saveWorkbook(RESULT, "Results.xlsx")   
 cat("\n")
 cat(green("Progam finsihed!! :) "))
 cat("\n")
@@ -928,6 +965,7 @@ cat("\n")
                     cPlot<- ggplot(contrast.plot,aes(y = Contrast, x = Difference, fill = after_stat(abs(x) < rValue[trait]))) +
                       stat_halfeye() +
                       theme_classic() +
+                      geom_vline(xintercept = 0, linetype = "dashed") +
                       geom_vline(xintercept = c(-rValue[trait], rValue[trait]), linetype = "dashed") +
                       scale_fill_manual(values = c("gray80", "skyblue"))+
                       theme(legend.position="none")
@@ -935,6 +973,7 @@ cat("\n")
                     cPlot<- ggplot(contrast.plot,aes(y = Contrast, x = Difference)) +
                     stat_halfeye() +
                     theme_classic() +
+                    geom_vline(xintercept = 0, linetype = "dashed") +
                     scale_fill_manual(values = c("gray80", "skyblue"))+
                     theme(legend.position="none")}
               }
@@ -947,6 +986,7 @@ cat("\n")
                     cPlot<- ggplot(contrast.plot,aes(y = Contrast, x = Ratio, fill = after_stat(x > rValue[trait] | x < 1/rValue[trait]))) +
                       stat_halfeye() +
                       theme_classic() +
+                      geom_vline(xintercept = 1, linetype = "dashed") +
                       geom_vline(xintercept = c(1/rValue[trait], rValue[trait]), linetype = "dashed") +
                       scale_fill_manual(values = c("gray80", "skyblue"))+
                       theme(legend.position="none")
@@ -954,6 +994,7 @@ cat("\n")
                   cPlot<- ggplot(contrast.plot,aes(y = Contrast, x = Ratio)) +
                     stat_halfeye() +
                     theme_classic() +
+                    geom_vline(xintercept = 1, linetype = "dashed") +
                     scale_fill_manual(values = c("gray80", "skyblue"))+
                     theme(legend.position="none")
                 }
